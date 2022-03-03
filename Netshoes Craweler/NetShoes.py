@@ -30,45 +30,40 @@ class NetShoes(scrapy.Spider):
     def parse(self, response):
         data['Title'] = response.xpath(
             '//div[@class="wrapper"]/a/@title').getall()
-
         links = response.xpath('//div[@class="wrapper"]/a/@href').getall()
         for link in links:
             data['Link'].append("https:"+link)
-
         for link in data['Link']:
             yield scrapy.Request(url=link, headers=h, callback=self.parse2)
 
     def parse2(self, response):
 
-        data['Rating'].append(response.xpath(
-            '//span[@class="rating-box__value"]/text()').get())
+        # XPATHS
+        xRating = '//span[@class="rating-box__value"]/text()'
+        xRef = '//p[@class="reference"]/span/text()'
+        xPrice = '//div[@class="default-price"]//strong/text()'
+        xMRP = '//del/text()'
+        xDescTitle = '//section[@class="feature-values"]//li/strong/text()'
+        xDescVal = '//section[@class="feature-values"]//li/text()'
+        xImg = '//figure/img[@itemprop="image"]/@src'
 
-        data['Ref'].append(response.xpath(
-            '//p[@class="reference"]/span/text()').get())
-
-        data['Price'].append(response.xpath(
-            '//div[@class="default-price"]//strong/text()').get())
-
-        data['MRP'].append(response.xpath('//del/text()').get())
+        data['Rating'].append(response.xpath(xRating).get())
+        data['Ref'].append(response.xpath(xRef).get())
+        data['Price'].append(response.xpath(xPrice).get())
+        data['MRP'].append(response.xpath(xMRP).get())
 
         desc = []
-        desc_title = response.xpath(
-            '//section[@class="feature-values"]//li/strong/text()').getall()
-        desc_val = response.xpath(
-            '//section[@class="feature-values"]//li/text()').getall()
-
+        desc_title = response.xpath(xDescTitle).getall()
+        desc_val = response.xpath(xDescVal).getall()
         for i in range(len(desc_title)):
             txt = desc_title[i]+" "+desc_val[i]
             desc.append(txt)
-
         data['Description'].append(desc)
 
-        images = response.xpath(
-            '//figure/img[@itemprop="image"]/@src').getall()
         img = []
+        images = response.xpath(xImg).getall()
         for url in images:
             img.append(str.split(url, '?')[0])
-
         data['Images'].append(img)
 
 
