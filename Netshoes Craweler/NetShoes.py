@@ -28,15 +28,21 @@ class NetShoes(scrapy.Spider):
         yield req
 
     def parse(self, response):
-        data['Title'] = response.xpath(
-            '//div[@class="wrapper"]/a/@title').getall()
+        pages = response.xpath('//div[@class="pagination"]/a/@href').getall()
+        pages.insert(0, response.url.split(':')[1])
+        pages.pop()
+        print(pages)
+        for page in pages:
+            yield scrapy.Request('https:'+page, self.parse2, headers=h)
+
+    def parse2(self, response):
         links = response.xpath('//div[@class="wrapper"]/a/@href').getall()
         for link in links:
             data['Link'].append("https:"+link)
         for link in data['Link']:
-            yield scrapy.Request(url=link, headers=h, callback=self.parse2)
+            yield scrapy.Request(link, self.parse3, headers=h)
 
-    def parse2(self, response):
+    def parse3(self, response):
 
         # XPATHS
         xRating = '//span[@class="rating-box__value"]/text()'
@@ -46,11 +52,13 @@ class NetShoes(scrapy.Spider):
         xDescTitle = '//section[@class="feature-values"]//li/strong/text()'
         xDescVal = '//section[@class="feature-values"]//li/text()'
         xImg = '//figure/img[@itemprop="image"]/@src'
+        xTitle = '//h1[@data-productname]/text()'
 
         data['Rating'].append(response.xpath(xRating).get())
         data['Ref'].append(response.xpath(xRef).get())
         data['Price'].append(response.xpath(xPrice).get())
         data['MRP'].append(response.xpath(xMRP).get())
+        data['Title'].append(response.xpath(xTitle).get())
 
         desc = []
         desc_title = response.xpath(xDescTitle).getall()
